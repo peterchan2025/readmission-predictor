@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Readmission Predictor</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #f6f8fa; padding: 30px; }
+    h1 { color: #333; }
+    form { background: white; padding: 20px; border-radius: 10px; width: 400px; }
+    label { display: block; margin-top: 10px; }
+    input, select { width: 100%; padding: 8px; margin-top: 5px; }
+    button { margin-top: 15px; padding: 10px; width: 100%; background: #0078d7; color: white; border: none; border-radius: 5px; cursor: pointer; }
+    button:hover { background: #005fa3; }
+    .result { margin-top: 20px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h1>Hospital Readmission Predictor</h1>
+  <form id="predictForm">
+    <label>Age</label>
+    <input type="number" id="age" required />
+
+    <label>Sex</label>
+    <select id="sex">
+      <option value="M">Male</option>
+      <option value="F">Female</option>
+    </select>
+
+    <label>Insurance</label>
+    <input type="text" id="insurance" value="Medicare" />
+
+    <label>Length of Stay</label>
+    <input type="number" id="length_of_stay" value="5" />
+
+    <label>Prior Admissions (6mo)</label>
+    <input type="number" id="num_prior_admissions_6mo" value="1" />
+
+    <label>ED Visits (30d)</label>
+    <input type="number" id="num_ed_visits_30d" value="0" />
+
+    <label>Medications</label>
+    <input type="number" id="num_medications" value="8" />
+
+    <label>High-Risk Diagnosis?</label>
+    <select id="hr_diagnosis_flag">
+      <option value="1">Yes</option>
+      <option value="0">No</option>
+    </select>
+
+    <label>Last Creatinine</label>
+    <input type="number" step="0.1" id="last_cr" value="1.1" />
+
+    <label>Social Risk?</label>
+    <select id="social_risk_flag">
+      <option value="1">Yes</option>
+      <option value="0">No</option>
+    </select>
+
+    <label>Discharge Destination</label>
+    <input type="text" id="discharge_dest" value="Home" />
+
+    <button type="submit">Predict</button>
+  </form>
+
+  <div class="result" id="result"></div>
+
+  <script>
+    const form = document.getElementById("predictForm");
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const data = {
+        age: parseInt(document.getElementById("age").value),
+        sex: document.getElementById("sex").value,
+        insurance: document.getElementById("insurance").value,
+        length_of_stay: parseInt(document.getElementById("length_of_stay").value),
+        num_prior_admissions_6mo: parseInt(document.getElementById("num_prior_admissions_6mo").value),
+        num_ed_visits_30d: parseInt(document.getElementById("num_ed_visits_30d").value),
+        num_medications: parseInt(document.getElementById("num_medications").value),
+        hr_diagnosis_flag: parseInt(document.getElementById("hr_diagnosis_flag").value),
+        last_cr: parseFloat(document.getElementById("last_cr").value),
+        social_risk_flag: parseInt(document.getElementById("social_risk_flag").value),
+        discharge_dest: document.getElementById("discharge_dest").value
+      };
+      const response = await fetch("/predict", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+      const result = await response.json();
+      document.getElementById("result").innerHTML =
+        result.error
+          ? `<span style='color:red'>Error: ${result.error}</span>`
+          : `Prediction: <b>${result.readmit_30d_pred === 1 ? "Likely Readmitted" : "Not Readmitted"}</b><br>Probability: ${(result.probability * 100).toFixed(1)}%`;
+    });
+  </script>
+</body>
+</html>
